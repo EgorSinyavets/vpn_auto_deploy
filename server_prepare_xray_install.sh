@@ -23,7 +23,7 @@ iptables -t mangle -X
 echo "Все правила iptables очищены."
 
 # Скачивание новых правил с GitHub
-RULES_URL="https://raw.githubusercontent.com/username/repository/branch/iptables.rules" # Замените на фактический URL
+RULES_URL="https://github.com/EgorSinyavets/vpn_auto_deploy/blob/main/fw_actual.v4" # Замените на фактический URL
 RULES_FILE="/tmp/iptables.rules"
 echo "Скачивание новых правил iptables с GitHub..."
 curl -o "$RULES_FILE" "$RULES_URL"
