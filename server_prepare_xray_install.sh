@@ -242,3 +242,13 @@ else
     echo "Ошибка при сохранении ссылки для подключения VLESS!"
     exit 1
 fi
+
+# Перезапуск службы Ssh
+echo "Перезапуск службы SSH..."
+systemctl restart sshd
+if [[ $? -eq 0 ]]; then
+    echo "Служба SSHD успешно перезапущена."
+else
+    echo "Ошибка перезапуска службы SSHD!"
+    exit 1
+fi
