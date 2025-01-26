@@ -209,15 +209,6 @@ if [[ -f "$SSH_CONFIG_FILE" ]]; then
     sed -i "s/^#Port 22/Port $NEW_SSH_PORT/" "$SSH_CONFIG_FILE"
     sed -i "s/^Port 22/Port $NEW_SSH_PORT/" "$SSH_CONFIG_FILE"
 
-    # Перезапускаем службу SSH
-    echo "Перезапуск SSH-службы..."
-    systemctl restart sshd
-    if [[ $? -eq 0 ]]; then
-        echo "SSH успешно перезапущен. Теперь вы можете подключаться через порт $NEW_SSH_PORT."
-    else
-        echo "Ошибка перезапуска SSH! Проверьте конфигурацию."
-        exit 1
-    fi
 else
     echo "Ошибка: файл $SSH_CONFIG_FILE не найден!"
     exit 1
@@ -247,7 +238,7 @@ fi
 echo "Перезапуск службы SSH..."
 systemctl restart sshd
 if [[ $? -eq 0 ]]; then
-    echo "Служба SSHD успешно перезапущена."
+    echo "Служба SSHD успешно перезапущена. Теперь вы можете подключаться через порт $NEW_SSH_PORT"
 else
     echo "Ошибка перезапуска службы SSHD!"
     exit 1
