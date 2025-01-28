@@ -129,6 +129,7 @@ mkdir -p "$(dirname "$VARS_FILE")"
 } > "$VARS_FILE"
 
 # Создание конфигурационного файла Xray
+CONFIG_FILE="/usr/local/etc/xray/config.json"
 
 echo "Создание конфигурационного файла $CONFIG_FILE..."
 cat <<EOF > "$CONFIG_FILE"
