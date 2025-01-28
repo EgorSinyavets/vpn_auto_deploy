@@ -14,3 +14,6 @@
 - запрашивает маскировочный домен (в идеале вы должны сами его определить, примеры www.amazon.com, images.apple.com)
 - сохраняет конфигурацию xray на основе ваших данных
 - формирует ссылку для hiddify и других клиентов (показывает в консоле + сохраняет в /tmp/vless_connect_code)
+
+Можно запустить одной командой с сервера:
+curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/server_prepare_xray_install.sh
