@@ -22,25 +22,53 @@ iptables -t mangle -F
 iptables -t mangle -X
 echo "Все правила iptables очищены."
 
-# Скачивание новых правил с GitHub
-RULES_URL="https://github.com/EgorSinyavets/vpn_auto_deploy/blob/main/fw_actual.v4" # Замените на фактический URL
-RULES_FILE="/tmp/iptables.rules"
-echo "Скачивание новых правил iptables с GitHub..."
+
+# Переменные
+RULES_URL="https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/fw_actual.v4" # URL для скачивания правил
+RULES_DIR="/etc/iptables"
+RULES_FILE="$RULES_DIR/fw_actual.v4"
+
+# Установка пакета iptables-services, если он отсутствует
+if ! rpm -q iptables-services &> /dev/null; then
+    echo "Установка iptables-services..."
+    yum install -y iptables-services
+fi
+
+# Создание директории для хранения правил, если её нет
+if [[ ! -d "$RULES_DIR" ]]; then
+  echo "Создание директории для хранения правил iptables: $RULES_DIR"
+  mkdir -p "$RULES_DIR"
+fi
+
+# Скачивание новых правил с GitLab
+echo "Скачивание новых правил iptables с GitLab..."
 curl -o "$RULES_FILE" "$RULES_URL"
+if [[ $? -ne 0 ]]; then
+  echo "Ошибка: не удалось скачать файл правил. Проверьте URL и соединение."
+  exit 1
+fi
+echo "Правила iptables успешно скачаны в $RULES_FILE."
 
 # Применение новых правил через iptables-restore
 if [[ -f "$RULES_FILE" ]]; then
     echo "Применение новых правил iptables..."
     iptables-restore < "$RULES_FILE"
+    if [[ $? -ne 0 ]]; then
+      echo "Ошибка: не удалось применить правила iptables."
+      exit 1
+    fi
     echo "Новые правила iptables успешно применены."
 else
     echo "Ошибка: файл правил iptables не найден!"
     exit 1
 fi
 
-# Добавление iptables в автозагрузку
+# Настройка iptables для автозагрузки
 echo "Сохранение текущих правил iptables в автозагрузку..."
 iptables-save > /etc/sysconfig/iptables
+
+# Включение iptables в автозагрузку и запуск службы
+echo "Включение iptables в автозагрузку..."
 systemctl enable iptables
 systemctl start iptables
 echo "iptables добавлен в автозагрузку и запущен."
@@ -59,7 +87,7 @@ fi
 echo "Настройка Xray..."
 
 # Генерация UUID (логина пользователя)
-UUID=$(./xray uuid)
+UUID=$(xray uuid)
 if [[ $? -eq 0 ]]; then
     echo "UUID успешно сгенерирован: $UUID"
 else
@@ -68,7 +96,7 @@ else
 fi
 
 # Генерация ключей x25519 (публичный и приватный ключи)
-X25519_OUTPUT=$(./xray x25519)
+X25519_OUTPUT=$(xray x25519)
 if [[ $? -eq 0 ]]; then
     # Извлечение приватного и публичного ключей из вывода
     PRIVATE_KEY=$(echo "$X25519_OUTPUT" | grep -i "Private key:" | awk -F ': ' '{print $2}')
@@ -101,7 +129,7 @@ mkdir -p "$(dirname "$VARS_FILE")"
 } > "$VARS_FILE"
 
 # Создание конфигурационного файла Xray
-CONFIG_FILE="/usr/local/etc/xray/config.json"
+
 echo "Создание конфигурационного файла $CONFIG_FILE..."
 cat <<EOF > "$CONFIG_FILE"
 {
@@ -191,9 +219,8 @@ else
     exit 1
 fi
 
-
 # Объявляем новый SSH порт
-NEW_SSH_PORT=445
+NEW_SSH_PORT=449
 
 # Проверяем текущую версию системы и путь к SSH-конфигурации
 SSH_CONFIG_FILE="/etc/ssh/sshd_config"
