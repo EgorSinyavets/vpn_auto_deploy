@@ -1,6 +1,6 @@
 Скрипты для настройки сервера и установки VPN 
 
-=================================================xray-vless============================================
+====================xray-vless==================
 Можно запустить одной командой с сервера:
 bash -c "$(curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/server_prepare_xray_install.sh)"
 
@@ -21,7 +21,7 @@ bash -c "$(curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_depl
 
 ВАЖНО: Во время установки вы должны будете ввести маскировочный домен (в идеале вы должны сами его определить, примеры www.amazon.com, images.apple.com)
 
-=================================================amnesia============================================
+======================amnesia==================
 
 Тестировался на Alma Linux 9.
 
