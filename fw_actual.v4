@@ -7,8 +7,8 @@
 -A INPUT -s 176.62.0.0/16 -j ACCEPT
 -A INPUT -s 109.120.0.0/16 -j ACCEPT
 -A INPUT -s 94.137.0.0/16 -j ACCEPT
--A INPUT -p udp -m udp --dport 35076 -j ACCEPT
--A INPUT -p tcp -m tcp --dport 35076 -j ACCEPT
+#-A INPUT -p udp -m udp --dport 35076 -j ACCEPT
+#-A INPUT -p tcp -m tcp --dport 35076 -j ACCEPT
 -A INPUT -p all -m state --state ESTABLISHED,RELATED -j ACCEPT
 -A INPUT -i lo -j ACCEPT
 -A INPUT -p icmp --icmp-type echo-reply -j ACCEPT

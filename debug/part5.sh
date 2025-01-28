@@ -1,4 +1,5 @@
 # Создание конфигурационного файла Xray
+
 CONFIG_FILE="/usr/local/etc/xray/config.json"
 
 echo "Создание конфигурационного файла $CONFIG_FILE..."
