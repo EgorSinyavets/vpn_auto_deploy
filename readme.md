@@ -1,6 +1,7 @@
 Скрипты для настройки сервера и установки VPN 
 
 ====================xray-vless==================
+
 Можно запустить одной командой с сервера:
 bash -c "$(curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/server_prepare_xray_install.sh)"
 
