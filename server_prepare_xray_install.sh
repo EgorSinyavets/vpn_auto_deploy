@@ -76,7 +76,8 @@ echo "iptables добавлен в автозагрузку и запущен."
 # Установка Xray через скрипт
 echo "Установка Xray с помощью официального скрипта..."
 #bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install #последний скрипт
-bash -c "$(curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/backup_xray_install_script.sh)" @ install #точно рабочий скрипт
+bash -c "$(curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/backup_xray_install_script.sh)" @ install --version v1.8.10
+ #точно рабочий скрипт
 if [[ $? -eq 0 ]]; then
     echo "Xray успешно установлен."
 else
@@ -100,6 +101,7 @@ fi
 X25519_OUTPUT=$(xray x25519)
 if [[ $? -eq 0 ]]; then
     # Извлечение приватного и публичного ключей из вывода
+    echo "$X25519_OUTPUT"
     PRIVATE_KEY=$(echo "$X25519_OUTPUT" | grep -i "Private key:" | awk -F ': ' '{print $2}')
     PUBLIC_KEY=$(echo "$X25519_OUTPUT" | grep -i "Public key:" | awk -F ': ' '{print $2}')
     echo "Приватный ключ: $PRIVATE_KEY"
