@@ -31,7 +31,7 @@ RULES_FILE="$RULES_DIR/fw_actual.v4"
 # Установка пакета iptables-services, если он отсутствует
 if ! rpm -q iptables-services &> /dev/null; then
     echo "Установка iptables-services..."
-    yum install -y iptables-services
+    apt-get install -y iptables-services
 fi
 
 # Создание директории для хранения правил, если её нет
