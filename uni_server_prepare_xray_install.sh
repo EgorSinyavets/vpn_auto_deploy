@@ -65,41 +65,145 @@ elif [ "$DISTRO" == "debian" ]; then
     systemctl restart netfilter-persistent
 fi
 
-echo "Установка Xray..."
-bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
+# Установка Xray через скрипт
+echo "Установка Xray с помощью официального скрипта..."
+bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install #последний скрипт
+#bash -c "$(curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/backup_xray_install_script.sh)" @ install --version v1.8.10
+ #точно рабочий скрипт
+if [[ $? -eq 0 ]]; then
+    echo "Xray успешно установлен."
+else
+    echo "Ошибка установки Xray!"
+    exit 1
+fi
 
-# Генерация UUID и ключей x25519
+# Настройка Xray: генерация UUID и ключей x25519
+echo "Настройка Xray..."
+
+# Генерация UUID (логина пользователя)
 UUID=$(xray uuid)
-X25519_OUTPUT=$(xray x25519)
-PRIVATE_KEY=$(echo "$X25519_OUTPUT" | grep -i "Private key:" | awk -F ': ' '{print $2}')
-PUBLIC_KEY=$(echo "$X25519_OUTPUT" | grep -i "Public key:" | awk -F ': ' '{print $2}')
+if [[ $? -eq 0 ]]; then
+    echo "UUID успешно сгенерирован: $UUID"
+else
+    echo "Ошибка при генерации UUID!"
+    exit 1
+fi
 
-echo "Введите маскировочный домен: "
-read MASKING_DOMAIN
+# Генерация ключей x25519 (публичный и приватный ключи)
+X25519_OUTPUT=$(xray x25519)
+if [[ $? -eq 0 ]]; then
+    # Извлечение приватного и публичного ключей из вывода
+    echo "$X25519_OUTPUT"
+    PRIVATE_KEY=$(echo "$X25519_OUTPUT" | grep -i "Private key:" | awk -F ': ' '{print $2}')
+    PUBLIC_KEY=$(echo "$X25519_OUTPUT" | grep -i "Public key:" | awk -F ': ' '{print $2}')
+    echo "Приватный ключ: $PRIVATE_KEY"
+    echo "Публичный ключ: $PUBLIC_KEY"
+else
+    echo "Ошибка при генерации ключей x25519!"
+    exit 1
+fi
+
+# Запрос маскировочного домена у пользователя
+read -p "Введите маскировочный домен: " MASKING_DOMAIN
+if [[ -z "$MASKING_DOMAIN" ]]; then
+    echo "Маскировочный домен не может быть пустым!"
+    exit 1
+fi
+echo "Маскировочный домен: $MASKING_DOMAIN"
+
+# Сохранение переменных в файл
+VARS_FILE="/usr/local/etc/xray/script_vars"
+echo "Сохранение переменных в $VARS_FILE..."
+mkdir -p "$(dirname "$VARS_FILE")"
+{
+    echo "SERVER_IP=$SERVER_IP"
+    echo "UUID=$UUID"
+    echo "MASKING_DOMAIN=$MASKING_DOMAIN"
+    echo "PRIVATE_KEY=$PRIVATE_KEY"
+    echo "PUBLIC_KEY=$PUBLIC_KEY"
+} > "$VARS_FILE"
 
 # Создание конфигурационного файла Xray
 CONFIG_FILE="/usr/local/etc/xray/config.json"
+
+echo "Создание конфигурационного файла $CONFIG_FILE..."
 cat <<EOF > "$CONFIG_FILE"
 {
-  "log": { "loglevel": "info" },
+  "log": {
+    "loglevel": "info"
+  },
   "inbounds": [
     {
       "listen": "$SERVER_IP",
       "port": 443,
       "protocol": "vless",
-      "settings": { "clients": [{ "id": "$UUID", "flow": "xtls-rprx-vision" }] },
+      "tag": "reality-in",
+      "settings": {
+        "clients": [
+          {
+            "id": "$UUID",
+            "email": "user1",
+            "flow": "xtls-rprx-vision"
+          }
+        ],
+        "decryption": "none"
+      },
       "streamSettings": {
         "network": "tcp",
         "security": "reality",
-        "realitySettings": { "privateKey": "$PRIVATE_KEY", "serverNames": ["$MASKING_DOMAIN"] }
+        "realitySettings": {
+          "show": false,
+          "dest": "$MASKING_DOMAIN:443",
+          "xver": 0,
+          "serverNames": [
+            "$MASKING_DOMAIN"
+          ],
+          "privateKey": "$PRIVATE_KEY",
+          "minClientVer": "",
+          "maxClientVer": "",
+          "maxTimeDiff": 0,
+          "shortIds": [""]
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
       }
     }
-  ]
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        "type": "field",
+        "protocol": "bittorrent",
+        "outboundTag": "block"
+      }
+    ],
+    "domainStrategy": "IPIfNonMatch"
+  }
 }
 EOF
 
-systemctl restart xray
-echo "Xray перезапущен."
+if [[ -f "$CONFIG_FILE" ]]; then
+    echo "Файл $CONFIG_FILE успешно создан."
+else
+    echo "Ошибка создания файла $CONFIG_FILE!"
+    exit 1
+fi
 
 # Изменение порта SSH
 NEW_SSH_PORT=449
