@@ -75,7 +75,8 @@ echo "iptables добавлен в автозагрузку и запущен."
 
 # Установка Xray через скрипт
 echo "Установка Xray с помощью официального скрипта..."
-bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
+#bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install #последний скрипт
+bash -c "$(curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/backup_xray_install_script.sh)" @ install #точно рабочий скрипт
 if [[ $? -eq 0 ]]; then
     echo "Xray успешно установлен."
 else
