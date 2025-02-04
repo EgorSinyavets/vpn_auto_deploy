@@ -276,7 +276,7 @@ function action4() {
 
 
 function action5() {
-    echo "Выполняется настройка безопасности для amnesia"
+    echo "Выполняется настройка безопасности для amnezia"
     
     if [ "$DISTRO" == "alma" ]; then
         echo "Отключение firewalld..."
@@ -490,7 +490,7 @@ while true; do
     echo "2) Полное удаление vless+xray"
     echo "3) Очистка всех firewall правил"
     echo "4) Настройка безопасности для xray "
-    echo "5) Настройка безопасности для amnesia"
+    echo "5) Настройка безопасности для amnezia"
     echo "6) Добавить порт или адрес в firewall"
     echo "7) Смена ssh порта на кастомный"
     echo "8) Выход"
