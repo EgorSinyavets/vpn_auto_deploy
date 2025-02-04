@@ -153,7 +153,7 @@ function action3() {
     if [ "$DISTRO" == "alma" ]; then
         yum install -y iptables-services curl
     elif [ "$DISTRO" == "debian" ]; then
-        apt update && apt install -y iptables iptables-persistent curl
+        apt install -y iptables iptables-persistent curl
     fi
 
     # Очистка всех правил iptables
@@ -170,6 +170,9 @@ function action3() {
     iptables -P INPUT ACCEPT
     iptables -P FORWARD ACCEPT
     iptables -P OUTPUT ACCEPT
+
+    echo "Правила очищены"
+
     pause
     }
 
@@ -186,9 +189,8 @@ function action4() {
     if [ "$DISTRO" == "alma" ]; then
         yum install -y iptables-services curl
     elif [ "$DISTRO" == "debian" ]; then
-        apt update && apt install -y iptables iptables-persistent curl
+        apt install -y iptables iptables-persistent curl
     fi
-
 
     # Функция для выбора варианта
     choose_option() {
@@ -222,11 +224,6 @@ function action4() {
     iptables -t raw -F
     iptables -t raw -X
 
-    # Установка политик по умолчанию
-    iptables -P INPUT DROP
-    iptables -P FORWARD DROP
-    iptables -P OUTPUT ACCEPT
-
     # Разрешить локальный трафик
     iptables -A INPUT -i lo -j ACCEPT
     iptables -A OUTPUT -o lo -j ACCEPT
@@ -256,30 +253,114 @@ function action4() {
     iptables -A INPUT -p tcp --dport 443 -j ACCEPT
     echo "Доступ по портам 80 (HTTP) и 443 (HTTPS) разрешен для всех."
 
-    # Сохранение правил
-    mkdir -p /etc/iptables
-    iptables-save > /etc/iptables/rules.v4
+    # Установка политик по умолчанию
+    iptables -P INPUT DROP
+    iptables -P FORWARD DROP
+    iptables -P OUTPUT ACCEPT
 
-    # Установка iptables-persistent (если не установлен)
-    if ! command -v netfilter-persistent &> /dev/null; then
-        echo "Установка iptables-persistent..."
-        sudo apt update
-        sudo apt install iptables-persistent -y
+    # Сохранение правил iptables в автозагрузку
+    if [ "$DISTRO" == "alma" ]; then
+        iptables-save > /etc/sysconfig/iptables
+        systemctl enable iptables
+        systemctl start iptables
+    elif [ "$DISTRO" == "debian" ]; then
+        iptables-save > /etc/iptables/rules.v4
+        systemctl enable netfilter-persistent
+        systemctl restart netfilter-persistent
     fi
-
-    # Включение автозагрузки правил
-    systemctl enable netfilter-persistent
 
     echo "Правила iptables настроены и сохранены в автозагрузку."
 
     pause
 }
 
+
 function action5() {
-    echo "Выполняется действие 5..."
-    # Добавьте код для пятого действия
+    echo "Выполняется настройка безопасности для amnesia"
+    
+    if [ "$DISTRO" == "alma" ]; then
+        echo "Отключение firewalld..."
+        systemctl stop firewalld
+        systemctl disable firewalld
+    fi
+
+    # Установка необходимых пакетов
+    if [ "$DISTRO" == "alma" ]; then
+        yum install -y iptables-services curl
+    elif [ "$DISTRO" == "debian" ]; then
+        apt install -y iptables iptables-persistent curl
+    fi
+
+
+    
+    # Функция для выбора варианта
+    choose_option() {
+        echo "Выберите вариант:"
+        echo "1) Разрешить доступ по всем портам для указанной подсети."
+        echo "2) Разрешить доступ к определенному SSH порту для всех."
+        read -p "Введите номер варианта (1 или 2): " choice
+
+        case $choice in
+            1)
+                read -p "Введите домашнюю подсеть (например, 145.218.0.0/16): " subnet
+                ;;
+            2)
+                read -p "Введите порт SSH (по умолчанию 22): " ssh_port
+                ssh_port=${ssh_port:-22}  # Если порт не введен, используем 22
+                ;;
+            *)
+                echo "Неверный выбор. Завершение скрипта."
+                exit 1
+                ;;
+        esac
+    }
+
+
+    # Разрешить локальный трафик
+    iptables -A INPUT -i lo -j ACCEPT
+    iptables -A OUTPUT -o lo -j ACCEPT
+
+    # Разрешить установленные и связанные соединения
+    iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+    # Выбор варианта
+    choose_option
+
+    # Применение выбранного варианта
+    case $choice in
+        1)
+            # Разрешить доступ по всем портам для указанной подсети
+            iptables -A INPUT -s $subnet -j ACCEPT
+            echo "Доступ по всем портам разрешен для подсети $subnet."
+            ;;
+        2)
+            # Разрешить доступ к порту SSH для всех
+            iptables -A INPUT -p tcp --dport $ssh_port -j ACCEPT
+            echo "Доступ к порту $ssh_port (SSH) разрешен для всех."
+            ;;
+    esac
+
+    # Установка политик по умолчанию
+    iptables -P INPUT DROP
+    iptables -P FORWARD ACCEPT
+    iptables -P OUTPUT ACCEPT
+
+    # Сохранение правил iptables в автозагрузку
+    if [ "$DISTRO" == "alma" ]; then
+        iptables-save > /etc/sysconfig/iptables
+        systemctl enable iptables
+        systemctl start iptables
+    elif [ "$DISTRO" == "debian" ]; then
+        iptables-save > /etc/iptables/rules.v4
+        systemctl enable netfilter-persistent
+        systemctl restart netfilter-persistent
+    fi
+
+    echo "Правила iptables настроены и сохранены в автозагрузку."
+
     pause
 }
+
 
 function action6() {
     echo "Выполняется действие 6..."
