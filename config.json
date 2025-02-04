@@ -5,14 +5,14 @@
   },
   "inbounds": [
     {
-      "listen": "<$SERVER_IP>",
+      "listen": "$SERVER_IP",
       "port": 443,
       "protocol": "vless",
       "tag": "reality-in",
       "settings": {
         "clients": [
           {
-            "id": "<$UUID>",
+            "id": "$UUID",
             "email": "user1",
             "flow": "xtls-rprx-vision"
           }
@@ -24,12 +24,12 @@
         "security": "reality",
         "realitySettings": {
           "show": false,
-          "dest": "<$MASKING_DOMAIN>:443",
+          "dest": "$MASKING_DOMAIN:443",
           "xver": 0,
           "serverNames": [
-            "<$MASKING_DOMAIN>"
+            "$MASKING_DOMAIN"
           ],
-          "privateKey": "<$PRIVATE_KEY>",
+          "privateKey": "$PRIVATE_KEY",
           "minClientVer": "",
           "maxClientVer": "",
           "maxTimeDiff": 0,

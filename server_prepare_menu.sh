@@ -98,7 +98,7 @@ function action1() {
     # Перемещение файла в нужное место (опционально)
     mv /tmp/config.conf /usr/local/etc/xray/config.json
 
-    echo "Конфигурационный файл обновлен и перемещен."
+    echo "Конфигурационный файл обновлен и перемещен по адресу /usr/local/etc/xray/config.json "
     
 
     # Перезапуск службы Xray
@@ -123,7 +123,7 @@ function action1() {
     # Проверяем, успешно ли сохранена ссылка
     if [[ -f "$VLESS_LINK_FILE" ]]; then
         echo "Ссылка для подключения VLESS успешно сохранена в $VLESS_LINK_FILE."
-        echo "Ссылка для подключения: $VLESS_LINK"
+        echo "Ссылка для подключения(вставьте ее в клиент типа hiddify): $VLESS_LINK"
     else
         echo "Ошибка при сохранении ссылки для подключения VLESS!"
         exit 1
@@ -134,8 +134,8 @@ function action1() {
 }
 
 function action2() {
-    echo "Выполняется действие 2..."
-    # Добавьте код для второго действия
+    echo "Выполняется полное удаление vless + xray"
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
     pause
 }
 
@@ -175,12 +175,13 @@ while true; do
     echo "   Выберите действие:       "
     echo "============================"
     echo "1) Установка и настройка vless+xray"
-    echo "2) Смена ssh порта на 449"
+    echo "2) Полное удаление vless+xray"
     echo "3) Настройка безопасности для xray"
     echo "4) Настройка безопасности для amnesia"
     echo "5) Настройка безопасности комплексная (amnesia+xray+other)"
     echo "6) Добавить домашний ip адрес для администрирования"
-    echo "7) Выход"
+    echo "7) Смена ssh порта на 449"
+    echo "8) Выход"
     echo "============================"
     read -p "Введите номер действия: " choice
 
@@ -191,7 +192,8 @@ while true; do
         4) action4 ;;
         5) action5 ;;
         6) action6 ;;
-        7) echo "Выход..."; exit 0 ;;
+        7) action7 ;;
+        8) echo "Выход..."; exit 0 ;;
         *) echo "Ошибка: выберите число от 1 до 7!" ; pause ;;
     esac
 done
