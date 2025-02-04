@@ -363,8 +363,76 @@ function action5() {
 
 
 function action6() {
-    echo "Выполняется действие 6..."
-    # Добавьте код для шестого действия
+    echo "Выполняется добавление портов или адресов в firewall"
+    
+    if [ "$DISTRO" == "alma" ]; then
+        echo "Отключение firewalld..."
+        systemctl stop firewalld
+        systemctl disable firewalld
+    fi
+
+    # Установка необходимых пакетов
+    if [ "$DISTRO" == "alma" ]; then
+        yum install -y iptables-services curl
+    elif [ "$DISTRO" == "debian" ]; then
+        apt install -y iptables iptables-persistent curl
+    fi
+
+
+    
+    # Функция для выбора варианта
+    choose_option() {
+        echo "Выберите вариант:"
+        echo "1) Добавить адрес/подсеть для входящих подключений "
+        echo "2) Открыть порт по TCP/UDP "
+        read -p "Введите номер варианта (1 или 2): " choice
+
+        case $choice in
+            1)
+                read -p "Введите новый адрес (например, 145.218.12.14/32): " subnet
+                ;;
+            2)
+                read -p "Введите номер порта : " new_port
+                                ;;
+            *)
+                echo "Неверный выбор. Завершение скрипта."
+                exit 1
+                ;;
+        esac
+    }
+
+
+        # Выбор варианта
+    choose_option
+
+    # Применение выбранного варианта
+    case $choice in
+        1)
+            # Разрешить доступ по всем портам для указанной подсети
+            iptables -A INPUT -s $subnet -j ACCEPT
+            echo "Доступ по всем портам разрешен для адреса $subnet."
+            ;;
+        2)
+            # Разрешить доступ к порту SSH для всех
+            iptables -A INPUT -p tcp --dport $new_port -j ACCEPT
+            iptables -A INPUT -p udp --dport $new_port -j ACCEPT
+            echo "Доступ к порту $new_port разрешен для всех."
+            ;;
+    esac
+
+        # Сохранение правил iptables в автозагрузку
+    if [ "$DISTRO" == "alma" ]; then
+        iptables-save > /etc/sysconfig/iptables
+        systemctl enable iptables
+        systemctl start iptables
+    elif [ "$DISTRO" == "debian" ]; then
+        iptables-save > /etc/iptables/rules.v4
+        systemctl enable netfilter-persistent
+        systemctl restart netfilter-persistent
+    fi
+
+    echo "Правила iptables настроены и сохранены в автозагрузку."
+
     pause
 }
 
@@ -384,8 +452,8 @@ while true; do
     echo "3) Очистка всех firewall правил"
     echo "4) Настройка безопасности для xray "
     echo "5) Настройка безопасности для amnesia"
-    echo "6) Добавить домашний ip адрес для администрирования"
-    echo "7) Смена ssh порта на 449"
+    echo "6) Добавить порт или адрес в firewall"
+    echo "7) Смена ssh порта на кастомный"
     echo "8) Выход"
     echo "============================"
     read -p "Введите номер действия: " choice
