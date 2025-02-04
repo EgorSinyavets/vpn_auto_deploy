@@ -1,7 +1,7 @@
 Скрипт для настройки сервера и установки VPN 
 
 Можно запустить одной командой с сервера:
-' bash -c "$(curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/server_prepare_menu.sh)" '
+**bash -c "$(curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/server_prepare_menu.sh)"**
 
 Тестировался на Alma Linux 9 и Debian 11
 
