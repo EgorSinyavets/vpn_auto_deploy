@@ -436,6 +436,45 @@ function action6() {
     pause
 }
 
+function action7() {
+    echo "Выполняется смена ssh порта на указанный вами"
+    
+    read -p "Введите новый порт ssh: " NEW_SSH_PORT
+
+    echo "Новый порт ssh: $NEW_SSH_PORT"
+    
+    # Проверяем текущую версию системы и путь к SSH-конфигурации
+    SSH_CONFIG_FILE="/etc/ssh/sshd_config"
+
+    # Изменяем порт в конфигурации SSH
+    echo "Изменение стандартного SSH-порта на $NEW_SSH_PORT..."
+    if [[ -f "$SSH_CONFIG_FILE" ]]; then
+        # Создаем резервную копию конфигурационного файла
+        cp "$SSH_CONFIG_FILE" "$SSH_CONFIG_FILE.bak"
+        echo "Резервная копия SSH-конфигурации сохранена как $SSH_CONFIG_FILE.bak."
+
+        # Обновляем порт в конфигурации
+        sed -i "s/^#Port 22/Port $NEW_SSH_PORT/" "$SSH_CONFIG_FILE"
+        sed -i "s/^Port 22/Port $NEW_SSH_PORT/" "$SSH_CONFIG_FILE"
+
+    else
+        echo "Ошибка: файл $SSH_CONFIG_FILE не найден!"
+        exit 1
+    fi
+
+    # Перезапуск службы Ssh
+    echo "Перезапуск службы SSH..."
+    systemctl restart sshd
+    if [[ $? -eq 0 ]]; then
+        echo "Служба SSHD успешно перезапущена. Теперь вы можете подключаться через порт $NEW_SSH_PORT"
+    else
+        echo "Ошибка перезапуска службы SSHD!"
+        exit 1
+    fi
+
+    pause
+}
+
 # Функция паузы перед возвратом в меню
 function pause() {
     read -p "Нажмите Enter, чтобы вернуться в меню..."
