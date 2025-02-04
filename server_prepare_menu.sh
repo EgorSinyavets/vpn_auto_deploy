@@ -1,20 +1,20 @@
 #!/bin/bash
 
+# Определяем дистрибутив
+if [ -f /etc/redhat-release ]; then
+    DISTRO="alma"
+elif [ -f /etc/debian_version ]; then
+    DISTRO="debian"
+else
+    echo "Ошибка: неподдерживаемая ОС"
+    exit 1
+fi
+
 # Функции для разных действий
 function action1() {
     
     echo "Выполняется установка и настройка xray + vless"
     
-    # Определяем дистрибутив
-    if [ -f /etc/redhat-release ]; then
-        DISTRO="alma"
-    elif [ -f /etc/debian_version ]; then
-        DISTRO="debian"
-    else
-        echo "Ошибка: неподдерживаемая ОС"
-        exit 1
-    fi
-
     # Сохраняем первый IP-адрес сервера
     SERVER_IP=$(hostname -I | awk '{print $1}')
     echo "IP-адрес сервера: $SERVER_IP"
@@ -140,14 +140,138 @@ function action2() {
 }
 
 function action3() {
-    echo "Выполняется действие 3..."
-    # Добавьте код для третьего действия
+    echo "Выполняется очистка firewall правил"
+
+    # Отключаем firewalld (только для AlmaLinux)
+    if [ "$DISTRO" == "alma" ]; then
+        echo "Отключение firewalld..."
+        systemctl stop firewalld
+        systemctl disable firewalld
+    fi
+
+    # Установка необходимых пакетов
+    if [ "$DISTRO" == "alma" ]; then
+        yum install -y iptables-services curl
+    elif [ "$DISTRO" == "debian" ]; then
+        apt update && apt install -y iptables iptables-persistent curl
+    fi
+
+    # Очистка всех правил iptables
+    iptables -F
+    iptables -X
+    iptables -t nat -F
+    iptables -t nat -X
+    iptables -t mangle -F
+    iptables -t mangle -X
+    iptables -t raw -F
+    iptables -t raw -X
+
+    # Установка политик по умолчанию на ACCEPT
+    iptables -P INPUT ACCEPT
+    iptables -P FORWARD ACCEPT
+    iptables -P OUTPUT ACCEPT
     pause
-}
+    }
 
 function action4() {
-    echo "Выполняется действие 4..."
-    # Добавьте код для четвертого действия
+    echo "Выполняется настройка безопасности для xray + vless"
+    
+    if [ "$DISTRO" == "alma" ]; then
+        echo "Отключение firewalld..."
+        systemctl stop firewalld
+        systemctl disable firewalld
+    fi
+
+    # Установка необходимых пакетов
+    if [ "$DISTRO" == "alma" ]; then
+        yum install -y iptables-services curl
+    elif [ "$DISTRO" == "debian" ]; then
+        apt update && apt install -y iptables iptables-persistent curl
+    fi
+
+
+    # Функция для выбора варианта
+    choose_option() {
+        echo "Выберите вариант:"
+        echo "1) Разрешить доступ по всем портам для указанной подсети."
+        echo "2) Разрешить доступ к определенному SSH порту для всех."
+        read -p "Введите номер варианта (1 или 2): " choice
+
+        case $choice in
+            1)
+                read -p "Введите домашнюю подсеть (например, 145.218.0.0/16): " subnet
+                ;;
+            2)
+                read -p "Введите порт SSH (по умолчанию 22): " ssh_port
+                ssh_port=${ssh_port:-22}  # Если порт не введен, используем 22
+                ;;
+            *)
+                echo "Неверный выбор. Завершение скрипта."
+                exit 1
+                ;;
+        esac
+    }
+
+    # Очистка всех правил и установка политик по умолчанию
+    iptables -F
+    iptables -X
+    iptables -t nat -F
+    iptables -t nat -X
+    iptables -t mangle -F
+    iptables -t mangle -X
+    iptables -t raw -F
+    iptables -t raw -X
+
+    # Установка политик по умолчанию
+    iptables -P INPUT DROP
+    iptables -P FORWARD DROP
+    iptables -P OUTPUT ACCEPT
+
+    # Разрешить локальный трафик
+    iptables -A INPUT -i lo -j ACCEPT
+    iptables -A OUTPUT -o lo -j ACCEPT
+
+    # Разрешить установленные и связанные соединения
+    iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+    # Выбор варианта
+    choose_option
+
+    # Применение выбранного варианта
+    case $choice in
+        1)
+            # Разрешить доступ по всем портам для указанной подсети
+            iptables -A INPUT -s $subnet -j ACCEPT
+            echo "Доступ по всем портам разрешен для подсети $subnet."
+            ;;
+        2)
+            # Разрешить доступ к порту SSH для всех
+            iptables -A INPUT -p tcp --dport $ssh_port -j ACCEPT
+            echo "Доступ к порту $ssh_port (SSH) разрешен для всех."
+            ;;
+    esac
+
+    # Разрешить доступ по портам 80 (HTTP) и 443 (HTTPS) для всех
+    iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+    iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+    echo "Доступ по портам 80 (HTTP) и 443 (HTTPS) разрешен для всех."
+
+    # Сохранение правил
+    mkdir -p /etc/iptables
+    iptables-save > /etc/iptables/rules.v4
+
+    # Установка iptables-persistent (если не установлен)
+    if ! command -v netfilter-persistent &> /dev/null; then
+        echo "Установка iptables-persistent..."
+        sudo apt update
+        sudo apt install iptables-persistent -y
+    fi
+
+    # Включение автозагрузки правил
+    systemctl enable netfilter-persistent
+
+    echo "Правила iptables настроены и сохранены в автозагрузку."
+
     pause
 }
 
@@ -176,9 +300,9 @@ while true; do
     echo "============================"
     echo "1) Установка и настройка vless+xray"
     echo "2) Полное удаление vless+xray"
-    echo "3) Настройка безопасности для xray"
-    echo "4) Настройка безопасности для amnesia"
-    echo "5) Настройка безопасности комплексная (amnesia+xray+other)"
+    echo "3) Очистка всех firewall правил"
+    echo "4) Настройка безопасности для xray "
+    echo "5) Настройка безопасности для amnesia"
     echo "6) Добавить домашний ip адрес для администрирования"
     echo "7) Смена ssh порта на 449"
     echo "8) Выход"
