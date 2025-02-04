@@ -1,24 +1,24 @@
 Скрипт для настройки сервера и установки VPN 
 
-====================xray-vless==================
 
 Можно запустить одной командой с сервера:
-bash -c "$(curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/server_prepare_xray_install.sh)"
+bash -c "$(curl -L https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/server_prepare_menu.sh)"
 
 Тестировался на Alma Linux 9.
 
 Требования:
-- RHEL like OS
-- белый ip v4
+- RHEL like or Debian like OS
 
-Что делает скрипт:
-- отключает firewalld , включает iptables
-- применяет правила с "https://raw.githubusercontent.com/EgorSinyavets/vpn_auto_deploy/refs/heads/main/fw_actual.v4" . ( необходимо вставить ссылку на ваши правила или переделать эти т.к. идет првязка к ip подсетям, с которых возможно администрирование сервера в будущем)
-- устанавливает xray через официальный скрипт
-- настраивает xray (генерирует и сохраняет uuid, публичный и приватный ключи)
-- сохраняет конфигурацию xray на основе ваших данных
-- формирует ссылку для hiddify и других клиентов (показывает в консоле + сохраняет в /tmp/vless_connect_code)
-- меняет порт ssh на нестандартный 449
+Возможности скрипта:
+     "1) Установка и настройка vless+xray"
+     "2) Полное удаление vless+xray"
+     "3) Очистка всех firewall правил"
+     "4) Настройка безопасности для xray "
+     "5) Настройка безопасности для amnesia"
+     "6) Добавить порт или адрес в firewall"
+     "7) Смена ssh порта на кастомный"
+
+
 
 ВАЖНО: Во время установки вы должны будете ввести маскировочный домен (в идеале вы должны сами его определить, примеры www.amazon.com, images.apple.com)
 
